@@ -224,7 +224,7 @@ trait ScalaJSModule extends scalalib.ScalaModule { outer =>
   /** Adds the Scala.js Library as mandatory dependency. */
   override def mandatoryIvyDeps = T {
     super.mandatoryIvyDeps() ++ Seq(
-      ivy"org.scala-js::scalajs-library:${scalaJSVersion()}".withDottyCompat(scalaVersion())
+      ivy"org.scala-js::scalajs-library:${scalaJSVersion()}".for3Use2_13(scalaVersion())
     )
   }
 
@@ -286,7 +286,7 @@ trait TestScalaJSModule extends ScalaJSModule with TestModule {
       Loose.Agg(
         ivy"org.scala-js::scalajs-library:${scalaJSVersion()}",
         ivy"org.scala-js::scalajs-test-bridge:${scalaJSVersion()}"
-      ).map(_.withDottyCompat(scalaVersion()))
+      ).map(_.for3Use2_13(scalaVersion()))
     })
   }
 

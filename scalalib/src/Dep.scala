@@ -34,6 +34,9 @@ case class Dep(dep: coursier.Dependency, cross: CrossVersion, force: Boolean) {
     dep = dep.withOptional(optional)
   )
 
+  @deprecated("Use for3Use2_13 instead", since = "mill 0.10.8")
+  def withDottyCompat(scalaVersion: String): Dep = for3Use2_13(scalaVersion)
+
   /**
    * If scalaVersion is a Dotty version, replace the cross-version suffix
    * by the Scala 2.x version that the Dotty version is retro-compatible with,
@@ -46,13 +49,13 @@ case class Dep(dep: coursier.Dependency, cross: CrossVersion, force: Boolean) {
    * }}}
    * you can replace it by:
    * {{{
-   * def ivyDeps = Agg(ivy"a::b:c".withDottyCompat(scalaVersion()))
+   * def ivyDeps = Agg(ivy"a::b:c".for3Use2_13(scalaVersion()))
    * }}}
    * This will have no effect when compiling with Scala 2.x, but when compiling
-   * with Dotty this will change the cross-version to a Scala 2.x one. This
-   * works because Dotty is currently retro-compatible with Scala 2.x.
+   * with Scala 3 this will change the cross-version to a Scala 2.x one. This
+   * works because Scala 3 is currently retro-compatible with Scala 2.x.
    */
-  def withDottyCompat(scalaVersion: String): Dep =
+  def for3Use2_13(scalaVersion: String): Dep =
     cross match {
       case cross: Binary if isDottyOrScala3(scalaVersion) =>
         val compatSuffix =
@@ -71,6 +74,19 @@ case class Dep(dep: coursier.Dependency, cross: CrossVersion, force: Boolean) {
           copy(cross = Constant(value = compatSuffix, platformed = cross.platformed))
         else
           this
+      case _ =>
+        this
+    }
+
+  /**
+   * If scalaVersion is a Scala 2.13 version, replace the cross-version suffix
+   * by the Scala 3 version that the Scala 2.13 version is forward-compatible with,
+   * otherwise do nothing.
+   */
+  def for2_13Use3(scalaVersion: String): Dep =
+    cross match {
+      case cross: Binary if scalaVersion.startsWith("2.13.") =>
+        copy(cross = Constant(value = "_3", platformed = cross.platformed))
       case _ =>
         this
     }
