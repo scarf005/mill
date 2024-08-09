@@ -13,12 +13,12 @@ jobs:
     steps:
     - checkout
     - run:
-      name: "Install OpenJDK"
-      command: |
-        sudo apt-get update && sudo apt-get install openjdk-<< parameters.java-version >>-jdk
-        sudo update-alternatives --set java /usr/lib/jvm/java-<< parameters.java-version >>-openjdk-amd64/bin/java
-        sudo update-alternatives --set javac /usr/lib/jvm/java-<< parameters.java-version >>-openjdk-amd64/bin/javac
-        java -version
+        name: "Install OpenJDK"
+        command: |
+          sudo apt-get update && sudo apt-get install openjdk-<< parameters.java-version >>-jdk
+          sudo update-alternatives --set java /usr/lib/jvm/java-<< parameters.java-version >>-openjdk-amd64/bin/java
+          sudo update-alternatives --set javac /usr/lib/jvm/java-<< parameters.java-version >>-openjdk-amd64/bin/javac
+          java -version
     - run:
         name: "Mill Command"
         command: "./mill << parameters.millargs >>"
