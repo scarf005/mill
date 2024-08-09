@@ -10,7 +10,7 @@ jobs:
       millargs:
         type: string
     machine:
-    - image: cimg/openjdk:<< parameters.java-version >>.0
+      image: cimg/openjdk:<< parameters.java-version >>.0
     executor: << parameters.os >>
     steps:
     - checkout
