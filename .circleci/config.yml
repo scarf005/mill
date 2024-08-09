@@ -19,56 +19,56 @@ workflows:
   all-tests:
     jobs:
     - test:
-        java-version: 11
+        java-version: "11"
         millargs: '"{main,scalalib,testrunner,bsp}.__.test"'
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: '"{main,scalalib,testrunner,bsp}.__.test"'
 
       # For most tests, run them arbitrarily on Java 8 or Java 17 on Linux, and
       # on the opposite version on Windows below, so we get decent coverage of
       # each test on each Java version and each operating system
     - test:
-        java-version: 11
+        java-version: "11"
         millargs: '"scalajslib.__.test"'
     - test:
-        java-version: 11
+        java-version: "11"
         millargs: '"scalanativelib.__.test"'
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: "contrib._.test"
 
       # Group these tests together to try and balance out the runtimes of each job
       # Just running in `local` mode since they shouldn't depend on the mode
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: "'example.{basic,scalabuilds,scalamodule,web}[_].local.test'"
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: "'example.{basicjava,javabuilds,javamodule,javaweb}[_].local.test'"
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: "'example.{thirdparty,cross,misc,tasks}[_].local.test'"
 
       # Most of these integration tests should not depend on which mode they
       # are run in, so just run them in `local`
     - test:
-        java-version: 11
+        java-version: "11"
         millargs: "'integration.{failure,feature,ide}[_].local.test'"
 
       # These invalidation tests need to be exercised in all three execution modes
       # to make sure they work with and without -i/--no-server being passed
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: "'integration.invalidation[_].local.test'"
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: "'integration.invalidation[_].fork.test'"
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: "'integration.invalidation[_].server.test'"
 
       # Check docsite compiles
     - test:
-        java-version: 17
+        java-version: "17"
         millargs: docs.githubPages
