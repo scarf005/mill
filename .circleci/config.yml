@@ -1,31 +1,79 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/executor-intro/ & https://circleci.com/docs/configuration-reference/#executor-job
-    docker:
-      # Specify the version you desire here
-      # See: https://circleci.com/developer/images/image/cimg/base
-      - image: cimg/base:current
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/jobs-steps/#steps-overview & https://circleci.com/docs/configuration-reference/#steps
+  test:
+    parameters:
+      os:
+        type: executor
+      java-version:
+        type: string
+      millargs:
+        type: string
+    machine:
+    - image: cimg/openjdk:<< parameters.java-version >>.0
+    executor: << parameters.os >>
     steps:
-      # Checkout the code as the first step.
-      - checkout
-      - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+    - checkout
+    - run:
+        name: "Mill Command"
+        command: "./mill << parameters.millargs >>"
 
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
 workflows:
-  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  all-tests:
     jobs:
-      - say-hello
+    - test:
+        os: linux
+        java-version: 11
+        millargs: '"{main,scalalib,testrunner,bsp}.__.test"'
+    - test:
+        os: linux
+        java-version: 17
+        millargs: '"{main,scalalib,testrunner,bsp}.__.test"'
+
+      # For most tests, run them arbitrarily on Java 8 or Java 17 on Linux, and
+      # on the opposite version on Windows below, so we get decent coverage of
+      # each test on each Java version and each operating system
+    - test:
+        java-version: 11
+        millargs: '"scalajslib.__.test"'
+    - test:
+        java-version: 11
+        millargs: '"scalanativelib.__.test"'
+    - test:
+        java-version: 17
+        millargs: "contrib._.test"
+
+      # Group these tests together to try and balance out the runtimes of each job
+      # Just running in `local` mode since they shouldn't depend on the mode
+    - test:
+        java-version: 17
+        millargs: "'example.{basic,scalabuilds,scalamodule,web}[_].local.test'"
+    - test:
+        java-version: 17
+        millargs: "'example.{basicjava,javabuilds,javamodule,javaweb}[_].local.test'"
+    - test:
+        java-version: 17
+        millargs: "'example.{thirdparty,cross,misc,tasks}[_].local.test'"
+
+      # Most of these integration tests should not depend on which mode they
+      # are run in, so just run them in `local`
+    - test:
+        java-version: 11
+        millargs: "'integration.{failure,feature,ide}[_].local.test'"
+
+      # These invalidation tests need to be exercised in all three execution modes
+      # to make sure they work with and without -i/--no-server being passed
+    - test:
+        java-version: 17
+        millargs: "'integration.invalidation[_].local.test'"
+    - test:
+        java-version: 17
+        millargs: "'integration.invalidation[_].fork.test'"
+    - test:
+        java-version: 17
+        millargs: "'integration.invalidation[_].server.test'"
+
+      # Check docsite compiles
+    - test:
+        java-version: 17
+        millargs: docs.githubPages
