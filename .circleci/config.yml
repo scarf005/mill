@@ -7,8 +7,9 @@ jobs:
         type: string
       millargs:
         type: string
-    docker:
-    - image: cimg/openjdk:<< parameters.java-version >>.0
+    machine:
+      image: ubuntu-2004:current
+    resource_class: medium
     steps:
     - checkout
     - run:
