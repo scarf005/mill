@@ -8,7 +8,7 @@ jobs:
       millargs:
         type: string
     docker:
-      image: cimg/openjdk:<< parameters.java-version >>.0
+    - image: cimg/openjdk:<< parameters.java-version >>.0
     steps:
     - checkout
     - run:
