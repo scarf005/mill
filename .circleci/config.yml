@@ -3,15 +3,12 @@ version: 2.1
 jobs:
   test:
     parameters:
-      os:
-        type: executor
       java-version:
         type: string
       millargs:
         type: string
     machine:
       image: cimg/openjdk:<< parameters.java-version >>.0
-    executor: << parameters.os >>
     steps:
     - checkout
     - run:
@@ -22,11 +19,9 @@ workflows:
   all-tests:
     jobs:
     - test:
-        os: linux
         java-version: 11
         millargs: '"{main,scalalib,testrunner,bsp}.__.test"'
     - test:
-        os: linux
         java-version: 17
         millargs: '"{main,scalalib,testrunner,bsp}.__.test"'
 
