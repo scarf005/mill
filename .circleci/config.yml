@@ -10,7 +10,7 @@ jobs:
 
     resource_class: windows.medium
     machine:
-      image: windows-server-2019-vs2019:2024.05.1
+      image: windows-server-2019-vs2019:2022.08.1
 
     steps:
       - checkout
