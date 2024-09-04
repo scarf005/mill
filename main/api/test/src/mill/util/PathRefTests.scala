@@ -83,7 +83,7 @@ object PathRefTests extends TestSuite {
     test("json") {
       def check(quick: Boolean) = withTmpDir { tmpDir =>
         val file = tmpDir / "foo.txt"
-        os.write(file, "hello")
+        os.write(file, "hello", perms = 420)
         val pr = PathRef(file, quick)
         val prFile = pr.path.toString().replace("\\", "\\\\")
         val json = upickle.default.write(pr)

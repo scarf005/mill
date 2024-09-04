@@ -9,13 +9,14 @@ jobs:
         type: string
     machine:
       image: ubuntu-2004:current
-    resource_class: medium
+    resource_class: large
     steps:
     - checkout
     - run:
         name: "Install OpenJDK"
         command: |
           sudo apt-get update && sudo apt-get install openjdk-<< parameters.java-version >>-jdk
+          sudo apt-get install clang
           sudo update-alternatives --set java /usr/lib/jvm/java-<< parameters.java-version >>-openjdk-amd64/bin/java
           sudo update-alternatives --set javac /usr/lib/jvm/java-<< parameters.java-version >>-openjdk-amd64/bin/javac
           java -version
