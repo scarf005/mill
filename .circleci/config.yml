@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run:
           name: "Mill Command"
-          command: "./mill -ik << parameters.millargs >>"
+          command: "./mill -ikj1 << parameters.millargs >>"
           shell: bash.exe
 
   test:
