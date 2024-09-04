@@ -23,8 +23,8 @@ jobs:
         type: string
       millargs:
         type: string
-    machine:
-      image: ubuntu-2004:current
+    docker:
+      - image: cimg/base:current
     resource_class: large
     steps:
     - checkout
