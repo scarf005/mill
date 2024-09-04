@@ -1,6 +1,22 @@
 version: 2.1
 
 jobs:
+  test-windows:
+    resource_class: windows.medium
+    machine:
+      image: windows-server-2022-gui:current
+
+    steps:
+      - checkout
+      - run:
+          command: $(echo hello | Out-Host; $?) -and $(echo world | Out-Host; $?)
+          shell: powershell.exe
+      - run:
+          command: echo hello && echo world
+          shell: bash.exe
+      - run:
+          command: echo hello & echo world
+          shell: cmd.exe
   test:
     parameters:
       java-version:
