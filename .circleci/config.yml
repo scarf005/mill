@@ -15,14 +15,9 @@ jobs:
     steps:
       - checkout
       - run:
-          command: $(echo hello | Out-Host; $?) -and $(echo world | Out-Host; $?)
-          shell: powershell.exe
-      - run:
-          command: echo hello && echo world
+          name: "Mill Command"
+          command: "./mill -ik << parameters.millargs >>"
           shell: bash.exe
-      - run:
-          command: echo hello & echo world
-          shell: cmd.exe
 
   test:
     parameters:
