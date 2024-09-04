@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run:
           name: "Mill Command"
-          command: "./mill -ikj1 __.compile; ./mill -ikj2 << parameters.millargs >>"
+          command: "./mill -ikj2 << parameters.millargs >>"
           shell: bash.exe
 
   test:
@@ -50,13 +50,19 @@ workflows:
   all-tests:
     jobs:
     - test:
+        name: build
+        java-version: "11"
+        millargs: '"__.compile"'
+    - test:
         name: main-etc-java11
         java-version: "11"
         millargs: '"{main,scalalib,testrunner,testkit,bsp}.__.test"'
+        requires: [build]
     - test:
         name: main-etc-java17
         java-version: "17"
         millargs: '"{main,scalalib,testrunner,testkit,bsp}.__.test"'
+        requires: [build]
 
       # For most tests, run them arbitrarily on Java 8 or Java 17 on Linux, and
       # on the opposite version on Windows below, so we get decent coverage of
@@ -65,14 +71,17 @@ workflows:
         name: scalajslib
         java-version: "11"
         millargs: '"scalajslib.__.testCached"'
+        requires: [build]
     - test:
         name: scalanativelib
         java-version: "11"
         millargs: '"scalanativelib.__.testCached"'
+        requires: [build]
     - test:
         name: contrib
         java-version: "17"
         millargs: "contrib._.testCached"
+        requires: [build]
 
       # Group these tests together to try and balance out the runtimes of each job
       # Just running in `local` mode since they shouldn't depend on the mode
@@ -80,18 +89,22 @@ workflows:
         name: example-javalib-scalalib
         java-version: "17"
         millargs: "'example.{javalib,scalalib}.__.local.testCached'"
+        requires: [build]
     - test:
         name: example-depth-extending
         java-version: "11"
         millargs: "'example.{depth,extending}.__.local.testCached'"
+        requires: [build]
     - test:
         name: example-thirdparty-java11
         java-version: "11"
         millargs: "'example.thirdparty[{mockito,acyclic,commons-io}].local.testCached'"
+        requires: [build]
     - test:
         name: example-thirdparty-java17
         java-version: "17"
         millargs: "'example.thirdparty[{fansi,jimfs,netty,gatling}].local.testCached'"
+        requires: [build]
 
       # Most of these integration tests should not depend on which mode they
       # are run in, so just run them in `local`
@@ -99,21 +112,24 @@ workflows:
         name: integration
         java-version: "11"
         millargs: "'integration.{failure,feature,ide}[_].local.testCached'"
-
+        requires: [build]
       # These invalidation tests need to be exercised in all three execution modes
       # to make sure they work with and without -i/--no-server being passed
     - test:
         name: integration-invalidation-local
         java-version: "17"
         millargs: "'integration.invalidation[_].local.testCached'"
+        requires: [build]
     - test:
         name: integration-invalidation-fork
         java-version: "17"
         millargs: "'integration.invalidation[_].fork.testCached'"
+        requires: [build]
     - test:
         name: integration-invalidation-server
         java-version: "17"
         millargs: "'integration.invalidation[_].server.testCached'"
+        requires: [build]
 
       # Check docsite compiles
     - test:
@@ -125,30 +141,41 @@ workflows:
       # just run a subset of examples/ on Windows, because for some reason running
       # the whole suite can take hours on windows v.s. half an hour on linux
     - test-windows:
+        name: windows-build
+        java-version: "11"
+        millargs: '"__.compile"'
+    - test-windows:
         name: windows-main-etc
         java-version: "11"
         millargs: '"{main,scalalib,bsp}.__.testCached"'
+        requires: [windows-build]
     - test-windows:
         name: windows-scalajslib
         java-version: "17"
         millargs: '"scalajslib.__.testCached"'
+        requires: [windows-build]
     - test-windows:
         name: windows-example-scalalib-basic
         java-version: "11"
         millargs: '"example.scalalib.basic.__.fork.testCached"'
+        requires: [windows-build]
     - test-windows:
         name: windows-integration-feature
         java-version: "17"
         millargs: "'integration.feature[_].fork.testCached'"
+        requires: [windows-build]
     - test-windows:
         name: windows-integration-invalidation
         java-version: "11"
         millargs: "'integration.invalidation[_].server.testCached'"
+        requires: [windows-build]
     - test-windows:
         name: windows-integration-failure
         java-version: "17"
         millargs: "'integration.failure[_].fork.testCached'"
+        requires: [windows-build]
     - test-windows:
         name: windows-contrib
         java-version: "11"
         millargs: "contrib.__.testCached"
+        requires: [windows-build]
