@@ -10,7 +10,7 @@ jobs:
 
     resource_class: windows.medium
     machine:
-      image: windows-server-2022-gui:current
+      image: windows-server-2019:current
 
     steps:
       - checkout
