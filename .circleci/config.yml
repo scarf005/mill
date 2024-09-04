@@ -23,8 +23,10 @@ jobs:
         type: string
       millargs:
         type: string
-    docker:
-      - image: cimg/base:current
+    machine:
+      image: ubuntu-2004:current
+#    docker:
+#      - image: cimg/base:current
     resource_class: large
     steps:
     - checkout
@@ -114,3 +116,35 @@ workflows:
         name: docs
         java-version: "17"
         millargs: docs.githubPages
+
+
+      # just run a subset of examples/ on Windows, because for some reason running
+      # the whole suite can take hours on windows v.s. half an hour on linux
+    - test-windows:
+        name: windows-main-etc
+        java-version: 11
+        millargs: '"{main,scalalib,bsp}.__.test"'
+    - test-windows:
+        name: windows-scalajslib
+        java-version: 17
+        millargs: '"scalajslib.__.test"'
+    - test-windows:
+        name: windows-example-scalalib-basic
+        java-version: 11
+        millargs: '"example.scalalib.basic.__.fork.test"'
+    - test-windows:
+        name: windows-integration-feature
+        java-version: 17
+        millargs: "'integration.feature[_].fork.test'"
+    - test-windows:
+        name: windows-integration-invalidation
+        java-version: 11
+        millargs: "'integration.invalidation[_].server.test'"
+    - test-windows:
+        name: windows-integration-failure
+        java-version: 17
+        millargs: "'integration.failure[_].fork.test'"
+    - test-windows:
+        name: windows-contrib
+        java-version: 11
+        millargs: "contrib.__.test"
