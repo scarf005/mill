@@ -266,6 +266,8 @@ object `package` extends RootModule with MockitoModule{
 
 > ./mill -j5 __.compile
 
+> sed -i.bak 's/assertEquals(50, settings.getStubbingLookupListeners().size());//g' src/test/java/org/mockitousage/debugging/StubbingLookupListenerCallbackTest.java # disable flaky test https://github.com/mockito/mockito/issues/2162
+
 > ./mill __.test
 Test org.mockitoinline.StaticMockTest.testStaticMockSimple...
 Test org.mockito.internal.creation.MockSettingsImplTest.validates_invocation_listeners finished...
