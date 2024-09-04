@@ -2,6 +2,12 @@ version: 2.1
 
 jobs:
   test-windows:
+    parameters:
+      java-version:
+        type: string
+      millargs:
+        type: string
+
     resource_class: windows.medium
     machine:
       image: windows-server-2022-gui:current
@@ -17,17 +23,20 @@ jobs:
       - run:
           command: echo hello & echo world
           shell: cmd.exe
+
   test:
     parameters:
       java-version:
         type: string
       millargs:
         type: string
+
     machine:
       image: ubuntu-2004:current
 #    docker:
 #      - image: cimg/base:current
     resource_class: large
+
     steps:
     - checkout
     - run:
