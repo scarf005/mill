@@ -27,8 +27,8 @@ object HelloJSWorldTests extends TestSuite {
   }
 
   object HelloJSWorld extends TestBaseModule {
-    val scalaVersions = Seq("2.13.3", "3.0.0-RC1", "2.12.12")
-    val scalaJSVersions = Seq("1.8.0", "1.3.1", "1.0.1")
+    val scalaVersions = Seq("2.13.13", "3.4.2", "2.12.12")
+    val scalaJSVersions = Seq("1.16.0", "1.11.0")
     val matrix = for {
       scala <- scalaVersions
       scalaJS <- scalaJSVersions
