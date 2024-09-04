@@ -5,6 +5,8 @@ import mill.api.Strict.Agg
 import mill.api._
 import mill.define._
 import mill.eval.Evaluator.TaskResult
+import mill.main.client.OutFiles._
+import mill.main.client.EnvVars
 import mill.util._
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
@@ -27,7 +29,8 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
       goals: Agg[Task[_]],
       reporter: Int => Option[CompileProblemReporter] = _ => Option.empty[CompileProblemReporter],
       testReporter: TestReporter = DummyTestReporter,
-      logger: ColorLogger = baseLogger
+      logger: ColorLogger = baseLogger,
+      serialCommandExec: Boolean = false
   ): Evaluator.Results = {
     os.makeDir.all(outPath)
 
@@ -40,7 +43,7 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
         if (effectiveThreadCount == 1) ""
         else s"[#${if (effectiveThreadCount > 9) f"$threadId%02d" else threadId}] "
 
-      try evaluate0(goals, logger, reporter, testReporter, ec, contextLoggerMsg)
+      try evaluate0(goals, logger, reporter, testReporter, ec, contextLoggerMsg, serialCommandExec)
       finally ec.close()
     }
   }
@@ -66,11 +69,12 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
       reporter: Int => Option[CompileProblemReporter] = _ => Option.empty[CompileProblemReporter],
       testReporter: TestReporter = DummyTestReporter,
       ec: ExecutionContext with AutoCloseable,
-      contextLoggerMsg0: Int => String
+      contextLoggerMsg0: Int => String,
+      serialCommandExec: Boolean
   ): Evaluator.Results = {
     os.makeDir.all(outPath)
-    val chromeProfileLogger = new ChromeProfileLogger(outPath / "mill-chrome-profile.json")
-    val profileLogger = new ProfileLogger(outPath / "mill-profile.json")
+    val chromeProfileLogger = new ChromeProfileLogger(outPath / millChromeProfile)
+    val profileLogger = new ProfileLogger(outPath / millProfile)
     val threadNumberer = new ThreadNumberer()
     val (sortedGroups, transitive) = Plan.plan(goals)
     val interGroupDeps = findInterGroupDeps(sortedGroups)
@@ -79,6 +83,12 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
     val count = new AtomicInteger(1)
 
     val futures = mutable.Map.empty[Terminal, Future[Option[GroupEvaluator.Results]]]
+
+    // Prepare a lookup tables up front of all the method names that each class owns,
+    // and the class hierarchy, so during evaluation it is cheap to look up what class
+    // each target belongs to determine of the enclosing class code signature changed.
+    val (classToTransitiveClasses, allTransitiveClassMethods) =
+      precomputeMethodNamesPerClass(sortedGroups)
 
     def evaluateTerminals(terminals: Seq[Terminal], contextLoggerMsg: Int => String)(implicit
         ec: ExecutionContext
@@ -114,7 +124,9 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
               counterMsg = counterMsg,
               zincProblemReporter = reporter,
               testReporter = testReporter,
-              logger = contextLogger
+              logger = contextLogger,
+              classToTransitiveClasses,
+              allTransitiveClassMethods
             )
 
             if (failFast && res.newResults.values.exists(_.result.asSuccess.isEmpty))
@@ -160,7 +172,7 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
     val tasksTransitive = tasksTransitive0.toSet
     val (tasks, leafCommands) = terminals0.partition {
       case Terminal.Labelled(t, _) if tasksTransitive.contains(t) => true
-      case _ => false
+      case _ => !serialCommandExec
     }
 
     // Run all non-command tasks according to the threads
@@ -169,7 +181,7 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
       tasks,
       // We want to skip the non-deterministic thread prefix in our test suite
       // since all it would do is clutter the testing logic trying to match on it
-      if (sys.env.contains("MILL_TEST_SUITE")) _ => ""
+      if (sys.env.contains(EnvVars.MILL_TEST_SUITE)) _ => ""
       else contextLoggerMsg0
     )(ec)
     evaluateTerminals(leafCommands, _ => "")(ExecutionContexts.RunNow)
@@ -205,6 +217,45 @@ private[mill] trait EvaluatorCore extends GroupEvaluator {
       getFailing(sortedGroups, results),
       results.map { case (k, v) => (k, v.map(_._1)) }
     )
+  }
+
+  private def precomputeMethodNamesPerClass(sortedGroups: MultiBiMap[Terminal, Task[_]]) = {
+    def resolveTransitiveParents(c: Class[_]): Iterator[Class[_]] = {
+      Iterator(c) ++
+        Option(c.getSuperclass).iterator.flatMap(resolveTransitiveParents) ++
+        c.getInterfaces.iterator.flatMap(resolveTransitiveParents)
+    }
+
+    val classToTransitiveClasses = sortedGroups
+      .values()
+      .flatten
+      .collect { case namedTask: NamedTask[_] => namedTask.ctx.enclosingCls }
+      .map(cls => cls -> resolveTransitiveParents(cls).toVector)
+      .toMap
+
+    val allTransitiveClasses = classToTransitiveClasses
+      .iterator
+      .flatMap(_._2)
+      .toSet
+
+    val allTransitiveClassMethods = allTransitiveClasses
+      .map { cls =>
+        val cMangledName = cls.getName.replace('.', '$')
+        cls -> cls.getDeclaredMethods
+          .flatMap { m =>
+            Seq(
+              m.getName -> m,
+              // Handle scenarios where private method names get mangled when they are
+              // not really JVM-private due to being accessed by Scala nested objects
+              // or classes https://github.com/scala/bug/issues/9306
+              m.getName.stripPrefix(cMangledName + "$$") -> m,
+              m.getName.stripPrefix(cMangledName + "$") -> m
+            )
+          }.toMap
+      }
+      .toMap
+
+    (classToTransitiveClasses, allTransitiveClassMethods)
   }
 
   private def findInterGroupDeps(sortedGroups: MultiBiMap[Terminal, Task[_]])

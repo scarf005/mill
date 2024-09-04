@@ -29,8 +29,8 @@ include::partial$Intro_to_Mill_Header.adoc[]
 Mill is used to build some real-world Java projects, such as the
 https://github.com/swaldman/c3p0[C3P0 JDBC Connection Pool], and
 can be used for applications built on top of common Java frameworks like
-xref:Java_Web_Build_Examples.adoc#_spring_boot_todomvc_app[Spring Boot] or
-xref:Java_Web_Build_Examples.adoc#_micronaut_todomvc_app[Micronaut].
+xref:Java_Web_Examples.adoc#_spring_boot_todomvc_app[Spring Boot] or
+xref:Java_Web_Examples.adoc#_micronaut_todomvc_app[Micronaut].
 
 Mill borrows ideas from other tools like https://maven.apache.org/[Maven],
 https://gradle.org/[Gradle], https://bazel.build/[Bazel], but tries to learn from the
@@ -40,7 +40,7 @@ are mature widely-used tools, they have fundamental limitations in their design
 https://www.bruceeckel.com/2021/01/02/the-problem-with-gradle/[Gradle Design]) that make
 them difficult to improve upon incrementally.
 
-Compared to Maven:
+xref:Case_Study_Mill_vs_Maven.adoc[Compared to Maven]:
 
 * **Mill follows Maven's innovation of good built-in defaults**: Mill's built-in
   ``JavaModule``s follow Maven's "convention over configuration" style. Small mill
@@ -60,20 +60,18 @@ Compared to Maven:
   tend to get slow: a Maven `clean install` taking over a minute might take just a 
   few seconds in Mill.
 
-Compared to Gradle:
+xref:Case_Study_Mill_vs_Gradle.adoc[Compared to Gradle]:
 
 * **Mill follows Gradle's conciseness**: Rather than pages and pages of verbose XML, every
   line in a Mill build is meaningful. e.g. adding a dependency is 1 line in
   Mill, like it is in Gradle, and unlike the 5 line `<dependency>` declaration you find in Maven.
-  Skimming and understanding a 100-line Mill `build.sc` file is
+  Skimming and understanding a 100-line Mill `build.mill` file is
   often much easier than skimming the equivalent 500-line Maven `pom.xml`.
 
-* **Mill builds are more easily understandable**: While the impact of a Gradle config change can
-  be hard to determine at a glance, the impact of a Mill config change is localized,
-  only affecting downstream tasks. Your IDE can navigate Mill's
-  xref:Tasks.adoc[task graph] and xref:Modules.adoc[module tree] just as easily as it can
-  navigate the method call graph in a normal Java program, something impossible in tools like
-  Maven or Gradle.
+* **Mill builds more performant**: Although both Mill and Gradle automatically cache and
+  parallelize your build, Mill does so with much less fixed overhead, resulting in 2-3x
+  speedups in common command-line workflows. This means less time waiting for your build
+  tool, and more time focusing on the things that really matter to your project.
 
 * **Mill enforces best practices by default**. All Mill tasks are cached by default, even
   custom tasks. All Mill tasks write their output to disk xref:Out_Dir.adoc[a
@@ -94,14 +92,14 @@ include::partial$Intro_to_Mill_BlogVideo.adoc[]
 
 == Simple Java Module
 
-include::example/basicjava/1-simple.adoc[]
+include::example/javalib/basic/1-simple.adoc[]
 
 == Custom Build Logic
 
-include::example/basicjava/2-custom-build-logic.adoc[]
+include::example/javalib/basic/2-custom-build-logic.adoc[]
 
 == Multi-Module Project
 
-include::example/basicjava/3-multi-module.adoc[]
+include::example/javalib/basic/3-multi-module.adoc[]
 
 include::partial$Intro_to_Mill_Footer.adoc[]

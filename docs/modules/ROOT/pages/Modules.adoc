@@ -12,15 +12,15 @@ Mill's comes with built in modules such as `mill.scalalib.ScalaModule` and
 `mill.scalalib.CrossSbtModule`, but you can also define your own modules to do
 things that are not built-in to Mill.
 
-include::example/tasks/7-modules.adoc[]
+include::example/depth/modules/7-modules.adoc[]
 
 == Use Case: DIY Java Modules
 
-include::example/tasks/8-diy-java-modules.adoc[]
+include::example/depth/modules/8-diy-java-modules.adoc[]
 
 == Backticked Names
 
-include::example/tasks/9-backticked-names.adoc[]
+include::example/depth/modules/9-backticked-names.adoc[]
 
 
 == External Modules
@@ -56,42 +56,4 @@ that is shared by the entire build: for example,
 `mill.scalalib.ZincWorkerApi/zincWorker` provides a shared Scala compilation
 service & cache that is shared between all ``ScalaModule``s, and
 `mill.scalalib.GenIdea/idea` lets you generate IntelliJ projects without
-needing to define your own `T.command` in your `build.sc` file
-
-== Foreign Modules
-
-Mill can load other mill projects from external (or sub) folders,
-using Ammonite's `$file` magic import, allowing to depend on foreign modules.
-This allows, for instance, to depend on other projects' sources, or split
-your build logic into smaller files.
-
-For instance, assuming the following structure : 
-
-[source,text]
-----
-foo/
-    build.sc
-    bar/
-        build.sc 
-baz/
-    build.sc     
-----
-
-you can write the following in `foo/build.sc` : 
-
-[source,scala]
-----
-
-import $file.bar.build
-import $file.^.baz.build
-import mill._ 
-
-def someFoo = T {
-
-    ^.baz.build.someBaz(...)
-    bar.build.someBar(...) 
-    ...
-}
-----
-
-The output of the foreign tasks will be cached under `foo/out/foreign-modules/`.
+needing to define your own `T.command` in your `build.mill` file

@@ -1,9 +1,11 @@
 package mill.scalalib.scalafmt
 
 import mill._
+import mill.main.client.CodeGenConstants.buildFileExtensions
 import mill.api.Result
 import mill.define.{ExternalModule, Discover}
 import mill.scalalib._
+import mainargs.arg
 
 trait ScalafmtModule extends JavaModule {
 
@@ -55,7 +57,7 @@ trait ScalafmtModule extends JavaModule {
       file <- {
         if (os.isDir(pathRef.path)) {
           os.walk(pathRef.path).filter(file =>
-            os.isFile(file) && (file.ext == "scala" || file.ext == "sc")
+            os.isFile(file) && (file.ext == "scala" || buildFileExtensions.contains(file.ext))
           )
         } else {
           Seq(pathRef.path)
@@ -68,7 +70,7 @@ trait ScalafmtModule extends JavaModule {
 
 object ScalafmtModule extends ExternalModule with ScalafmtModule {
 
-  def reformatAll(sources: mill.main.Tasks[Seq[PathRef]]): Command[Unit] =
+  def reformatAll(@arg(positional = true) sources: mill.main.Tasks[Seq[PathRef]]): Command[Unit] =
     T.command {
       val files = T.sequence(sources.value)().flatMap(filesToFormat)
       ScalafmtWorkerModule
@@ -79,7 +81,8 @@ object ScalafmtModule extends ExternalModule with ScalafmtModule {
         )
     }
 
-  def checkFormatAll(sources: mill.main.Tasks[Seq[PathRef]]): Command[Unit] =
+  def checkFormatAll(@arg(positional = true) sources: mill.main.Tasks[Seq[PathRef]])
+      : Command[Unit] =
     T.command {
       val files = T.sequence(sources.value)().flatMap(filesToFormat)
       ScalafmtWorkerModule

@@ -1,7 +1,7 @@
 package mill
 package scalajslib
 
-import mainargs.Flag
+import mainargs.{Flag, arg}
 import mill.api.{Loose, PathRef, Result, internal}
 import mill.scalalib.api.ZincWorkerUtil
 import mill.scalalib.Lib.resolveDependencies
@@ -12,6 +12,7 @@ import mill.scalajslib.api._
 import mill.scalajslib.internal.ScalaJSUtils.getReportMainFilePathRef
 import mill.scalajslib.worker.{ScalaJSWorker, ScalaJSWorkerExternalModule}
 import mill.scalalib.bsp.{ScalaBuildTarget, ScalaPlatform}
+import mill.T
 
 trait ScalaJSModule extends scalalib.ScalaModule { outer =>
 
@@ -162,13 +163,17 @@ trait ScalaJSModule extends scalalib.ScalaModule { outer =>
 
   }
 
-  override def runMainLocal(mainClass: String, args: String*): Command[Unit] = T.command[Unit] {
+  override def runMainLocal(
+      @arg(positional = true) mainClass: String,
+      args: String*
+  ): Command[Unit] = T.command[Unit] {
     mill.api.Result.Failure("runMain is not supported in Scala.js")
   }
 
-  override def runMain(mainClass: String, args: String*): Command[Unit] = T.command[Unit] {
-    mill.api.Result.Failure("runMain is not supported in Scala.js")
-  }
+  override def runMain(@arg(positional = true) mainClass: String, args: String*): Command[Unit] =
+    T.command[Unit] {
+      mill.api.Result.Failure("runMain is not supported in Scala.js")
+    }
 
   private[scalajslib] def linkJs(
       worker: ScalaJSWorker,
@@ -337,7 +342,7 @@ trait ScalaJSModule extends scalalib.ScalaModule { outer =>
 }
 
 trait TestScalaJSModule extends ScalaJSModule with TestModule {
-
+  override def resources: T[Seq[PathRef]] = super[ScalaJSModule].resources
   def scalaJSTestDeps = T {
     defaultResolver().resolveDeps(
       Loose.Agg(

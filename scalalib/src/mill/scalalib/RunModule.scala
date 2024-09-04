@@ -1,8 +1,10 @@
 package mill.scalalib
 
+import mainargs.arg
 import mill.api.JsonFormatters.pathReadWrite
 import mill.api.{Ctx, PathRef, Result}
 import mill.define.{Command, Task}
+import mill.main.client.EnvVars
 import mill.util.Jvm
 import mill.{Agg, Args, T}
 import os.{Path, ProcessOutput}
@@ -19,7 +21,7 @@ trait RunModule extends WithZincWorker {
   /**
    * Any environment variables you want to pass to the forked JVM.
    */
-  def forkEnv: T[Map[String, String]] = T.input { T.env }
+  def forkEnv: T[Map[String, String]] = T { Map.empty[String, String] }
 
   def forkWorkingDir: T[os.Path] = T { T.workspace }
 
@@ -94,7 +96,7 @@ trait RunModule extends WithZincWorker {
   /**
    * Same as `run`, but lets you specify a main class to run
    */
-  def runMain(mainClass: String, args: String*): Command[Unit] = {
+  def runMain(@arg(positional = true) mainClass: String, args: String*): Command[Unit] = {
     val task = runForkedTask(T.task { mainClass }, T.task { Args(args) })
     T.command { task }
   }
@@ -102,7 +104,7 @@ trait RunModule extends WithZincWorker {
   /**
    * Same as `runBackground`, but lets you specify a main class to run
    */
-  def runMainBackground(mainClass: String, args: String*): Command[Unit] = {
+  def runMainBackground(@arg(positional = true) mainClass: String, args: String*): Command[Unit] = {
     val task = runBackgroundTask(T.task { mainClass }, T.task { Args(args) })
     T.command { task }
   }
@@ -110,7 +112,7 @@ trait RunModule extends WithZincWorker {
   /**
    * Same as `runLocal`, but lets you specify a main class to run
    */
-  def runMainLocal(mainClass: String, args: String*): Command[Unit] = {
+  def runMainLocal(@arg(positional = true) mainClass: String, args: String*): Command[Unit] = {
     val task = runLocalTask(T.task { mainClass }, T.task { Args(args) })
     T.command { task }
   }
@@ -161,7 +163,7 @@ trait RunModule extends WithZincWorker {
 
       // Make sure to sleep a bit in the Mill test suite to allow the servers we
       // start time to initialize before we proceed with the following commands
-      if (T.env.contains("MILL_TEST_SUITE")) {
+      if (T.env.contains(EnvVars.MILL_TEST_SUITE)) {
         println("runBackgroundTask SLEEPING 10000")
         Thread.sleep(5000)
       }

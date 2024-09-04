@@ -18,47 +18,47 @@ Many of the APIs covered here are listed in the Scaladoc:
 
 == Compilation & Execution Flags
 
-include::example/scalamodule/1-compilation-execution-flags.adoc[]
+include::example/scalalib/module/1-compilation-execution-flags.adoc[]
 
 == Adding Ivy Dependencies
 
-include::example/scalamodule/2-ivy-deps.adoc[]
+include::example/scalalib/module/2-ivy-deps.adoc[]
 
 == Runtime and Compile-time Dependencies
 
-include::example/scalamodule/3-run-compile-deps.adoc[]
+include::example/scalalib/module/3-run-compile-deps.adoc[]
 
-== Test Dependencies
+== Classpath and Filesystem Resources
 
-include::example/scalamodule/4-test-deps.adoc[]
+include::example/scalalib/module/5-resources.adoc[]
 
 == Scala Compiler Plugins
 
-include::example/scalamodule/5-scala-compiler-plugins.adoc[]
+include::example/scalalib/module/6-scala-compiler-plugins.adoc[]
 
 == Scaladoc Config
 
-include::example/scalamodule/6-docjar.adoc[]
+include::example/scalalib/module/7-docjar.adoc[]
 
 == Unmanaged Jars
 
-include::example/scalamodule/7-unmanaged-jars.adoc[]
+include::example/scalalib/module/8-unmanaged-jars.adoc[]
 
 == Specifying the Main Class
 
-include::example/scalamodule/8-main-class.adoc[]
+include::example/scalalib/module/9-main-class.adoc[]
 
 == Downloading Non-Maven Jars
 
-include::example/scalamodule/9-downloading-non-maven-jars.adoc[]
+include::example/scalalib/module/10-downloading-non-maven-jars.adoc[]
 
 == Customizing the Assembly
 
-include::example/scalamodule/10-assembly-config.adoc[]
+include::example/scalalib/module/11-assembly-config.adoc[]
 
 == Repository Config
 
-include::example/scalamodule/11-repository-config.adoc[]
+include::example/scalalib/module/12-repository-config.adoc[]
 
 == Maven Central: Blocked!
 
@@ -86,11 +86,11 @@ If you are using millw, a more permanent solution could be to set the environmen
 
 == Scoverage
 
-include::example/scalamodule/12-contrib-scoverage.adoc[]
+include::example/scalalib/module/13-contrib-scoverage.adoc[]
 
 == Unidoc
 
-include::example/scalamodule/13-unidoc.adoc[]
+include::example/scalalib/module/14-unidoc.adoc[]
 
 == Reformatting your code
 
@@ -98,7 +98,7 @@ Mill supports code formatting via https://scalameta.org/scalafmt/[scalafmt] out 
 
 To have a formatting per-module you need to make your module extend `mill.scalalib.scalafmt.ScalafmtModule`:
 
-.`build.sc`
+.`build.mill`
 [source,scala,subs="attributes,verbatim"]
 ----
 import mill._, scalalib._, scalafmt._
@@ -168,14 +168,14 @@ The older your used Mill version or the newer the Scala version you want to use,
 
 == Disabling incremental compilation with Zinc
 
-By default all `ScalaModule`s use incremental compilation via https://github.com/sbt/zinc[Zinc] to
+By default all ``ScalaModule``s use incremental compilation via https://github.com/sbt/zinc[Zinc] to
 only recompile sources that have changed since the last compile, or ones that have been invalidated
 by changes to upstream sources.
 
 If for any reason you want to disable incremental compilation for a module, you can override and set
 `zincIncrementalCompilation` to `false`
 
-.`build.sc`
+.`build.mill`
 [source,scala,subs="attributes,verbatim"]
 ----
 import mill._, scalalib._

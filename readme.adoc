@@ -85,15 +85,15 @@ The following table contains the main ways you can test the code in
 |===
 | Config | Automated Testing | Manual Testing | Manual Testing CI
 | In-Process Tests | `main.__.test`, `scalalib.test`, `contrib.buildinfo.test`, etc. |  |
-| Sub-Process w/o packaging/publishing| `example.\\__.local`, `integration.__.local` | `dev.run` | `test-mill-dev.sh`
-| Sub-Process w/ packaging/publishing | `example.\\__.server`, `integration.__.server` | `dev.assembly` | `test-mill-release.sh`
+| Sub-Process w/o packaging/publishing| `example.\\__.local`, `integration.__.local` | `dist.run` | `test-mill-dev.sh`
+| Sub-Process w/ packaging/publishing | `example.\\__.server`, `integration.__.server` | `dist.assembly` | `test-mill-release.sh`
 | Bootstrapping: Building Mill with your current checkout of Mill |  | `installLocal` | `test-mill-bootstrap.sh`
 |===
 
 === In-Process Tests
 
 In-process tests live in the `.test` sub-modules of the various Mill modules.
-These range from tiny unit tests, to larger integration tests that instantiate a `TestUtil.BaseModule` in-process and a `TestEvaluator` to evaluate tasks on it.
+These range from tiny unit tests, to larger integration tests that instantiate a `mill.testkit.BaseModule` in-process and a `UnitTester` to evaluate tasks on it.
 
 Most "core" tests live in `main.__test`; these should run almost instantly, and cover most of Mill's functionality that is not specific to Scala/Scala.js/etc..
 Tests specific to Scala/Scala.js/Scala-Native live in
@@ -109,9 +109,9 @@ Note that the in-memory tests compile the `BaseModule` together with the test su
 `example.\\__.local` and `integration.__.local` tests run Mill end-to-end in a subprocess, but *without* the expensive/slow steps of packaging the core packages into an assembly jar and publishing the remaining packages to
 `~/.ivy2/local`.
 You can reproduce these tests manually using
-`./mill dev.run <test-folder-path> <command>`.
+`./mill dist.run <test-folder-path> <command>`.
 
-`example` tests are written in a single `build.sc` file, with the test commands written in a comment with a bash-like syntax together with the build code and comments that explain the example.
+`example` tests are written in a single `build.mill` file, with the test commands written in a comment with a bash-like syntax together with the build code and comments that explain the example.
 These serve three purposes:
 
 1. Basic smoke-tests to make sure the functionality works at all, without covering every edge case
@@ -128,7 +128,7 @@ The `integration` tests are similar to `example` tests and share most of their t
 2. `integration` tests are written using a Scala test suite extending
 `IntegrationTestSuite`, giving more flexibility at the expense of readability
 
-You can reproduce any of the tests manually using `dev.run`, e.g.
+You can reproduce any of the tests manually using `dist.run`, e.g.
 
 **Automated Test**
 
@@ -141,14 +141,14 @@ You can reproduce any of the tests manually using `dev.run`, e.g.
 
 [source,bash]
 ----
-./mill dev.run example/basic/1-simple run --text hello
+./mill dist.run example/basic/1-simple run --text hello
 ----
 
 **Manual Test using Launcher Script**
 
 [source,bash]
 ----
-./mill dev.launcher && (cd example/basic/1-simple && ../../../out/dev/launcher.dest/run run --text hello)
+./mill dist.launcher && (cd example/basic/1-simple && ../../../out/dist/launcher.dest/run run --text hello)
 ----
 
 === Sub-Process Tests *with* Packaging/Publishing
@@ -157,11 +157,11 @@ You can reproduce any of the tests manually using `dev.run`, e.g.
 `integration.__.fork` cover the same test cases as the `.local` tests described above, but they perform packaging of the Mill core modules into an assembly jar, and publish the remaining modules to `~/.ivy2/local`.
 This results in a more realistic test environment, but at the cost of taking tens-of-seconds more to run a test after making a code change.
 
-You can reproduce these tests manually using `dev.assembly`:
+You can reproduce these tests manually using `dist.assembly`:
 
 [source,bash]
 ----
-./mill dev.assembly && (cd example/basic/1-simple && ../../../out/dev/assembly.dest/mill run --text hello)
+./mill dist.assembly && (cd example/basic/1-simple && ../../../out/dist/assembly.dest/mill run --text hello)
 ----
 
 There are two flavors of these tests:
@@ -183,7 +183,7 @@ To test bootstrapping of Mill's own Mill build using a version of Mill built fro
 ci/patch-mill-bootstrap.sh
 ----
 
-This creates a standalone assembly at `target/mill-release` you can use, which references jars published locally in your `~/.ivy2/local` cache, and applies any necessary patches to `build.sc` to deal with changes in Mill between the version specified in `.config/mill-version` that is normally used to build Mill and the `HEAD` version your assembly was created from.
+This creates a standalone assembly at `target/mill-release` you can use, which references jars published locally in your `~/.ivy2/local` cache, and applies any necessary patches to `build.mill` to deal with changes in Mill between the version specified in `.config/mill-version` that is normally used to build Mill and the `HEAD` version your assembly was created from.
 You can then use this standalone assembly to build & re-build your current Mill checkout without worrying about stomping over compiled code that the assembly is using.
 
 This assembly is design to work on bash, bash-like shells and Windows Cmd.
@@ -197,6 +197,22 @@ If you want to install into a different location or a different Ivy repository, 
 $ ./mill installLocal --binFile /tmp/mill --ivyRepo /tmp/millRepo
 ...
 Published 44 modules and installed /tmp/mill
+----
+=== Testing Documentation Changes
+
+For testing documentation changes locally, you can generate documentation for the current checkout via
+
+[source,bash]
+----
+$ ./mill docs.fastPages
+----
+
+To generate documentation for both the current checkout and earlier versions, you can use
+
+
+[source,bash]
+----
+$ ./mill docs.localPages
 ----
 
 === Troubleshooting
@@ -285,6 +301,135 @@ endif::[]
 :link-milestone: {link-github}/milestone
 // find-replace-regex: https://github.com/com-lihaoyi/mill/pull/(\d*) -> {link-pr}/$1[#$1]
 
+
+[#main]
+=== main branch
+
+The upcoming 0.12.0 release is intended to bundle together breaking changes we
+need to do that do not break binary compatibility. It is expected to be followed by 0.13.x,
+which will contain further changes that _do_ break binary compatibility. Due to binary 
+compatibility, Mill plugins published for Mill 0.11.x can continue to be used without updating 
+them. 
+
+Despite being binary compatible, 0.12.0 is a major release, and it should be expected to take
+some work to upgrade to. The breaking changes are listed below, with instructions provided on 
+how to either disable the breaking change with a flag or adjust your code to accommodate it. 
+
+
+* *Breaking Changes*
+
+
+** Build file overhaul: Mill now uses `.mill` as its file extension, with some semantic changes
+from the old `.sc` files to allow better IDE support. The `.sc` extension is still supported
+and its semantics are largely unchanged the ease the migration, but you should convert your Mill
+configs to `.mill` files to benefit from Mill's improved IDE experience going forward.
+
+*** The `build.sc` file has been renamed `build.mill` to prevent confusion with Ammonite/Scala-CLI scripts,
+and all associated `.sc` files have been renamed to `.mill`.
+
+*** All `.mill` files must have a `package` declaration,
+with `package build` for `.mill` files in the root folder and `package build.foo.bar` for `.mill` files in `foo/bar/`.
+
+**** The package declaration remains optional for legacy `.sc` files
+
+*** Only `foo.mill` files in folders directly containing a `build.mill` or `package.mill` can
+be imported via `import $file`.
+
+**** You need to create empty `package.mill` files in any folder containing scripts if they are not already
+adjacent to your `build.mill` in the root folder
+
+**** `foo.sc` files can continue to be imported from arbitrary paths, to ease in the migration
+
+*** Builds can now be modularized into per-folder definitions by defining `package.mill` files in subfolders
+{link-pr}/3213[#3213]. You can no longer define targets and modules in arbitrary `foo.sc` files
+
+**** All target and module definitions must be moved into `package.mill` files in each folder.
+
+*** `$file` references in `.mill` files are now absolute from the project root, and thus `.^` to
+refer to parent package is no longer supported, for consistency with other programming environments
+
+**** `$file` references in old `.sc` files are unchanged and continue being relative, preserving the
+current behavior.
+
+** ``RootModule``s can only be named `package`, e.g. `object foo extends RootModule` must now be
+named ``object `package` extends RootModule`.
+
+*** If you have an existing `RootModule`, you need to rename it ``object `package` extends RootModule``
+
+** Turn on parallelism for task evaluation by default, except for commands
+which always run serially at the end {link-pr}/3265[#3265]
+
+*** This can be disabled by passing `--jobs 1`
+
+** Mill uses empty sandbox folders as the working directory for running its own code and
+{link-pr}/3367[#3367] and test suites {link-pr}/3347[#3347], to avoid accidental interference
+between tasks and tests due to parallelism
+
+*** This can be disabled by adding `def testSandboxWorkingDir = false` in your test module
+
+** Mill commands now require arguments to be passed named via `./mill mycommand --key value`, rather than
+  allowing just `./mill mycommand value`. {link-pr}/3431[#3431].
+
+*** You can pass in
+  `--allow-positional-command-args` to fall back to the old behavior, or use `@mainargs.arg(positional = true)`
+  on individual parameters
+
+** Dropped support for Java 8, Scala 2.11.x/3.1.x, and Scala-Native 0.4.x, following suit with the rest of the 
+com-lihaoyi ecosystem. We now expect a minimum of Java 8, Scala 2.12.x/3.2.x, and Scala-Native 0.5.x
+
+** `--disable-callgraph-invalidation` is no longer supported. The flag is still accepted but is
+now a no-op.
+
+* Other Changes
+
+** Overhaul the Mill client-server protocol to improve robustness
+{link-pr}/3363[#3363] {link-pr}/3366[#3366] {link-pr}/3368[#3368] {link-pr}/3370[#3370]
+
+** Mill now publishes unit, integration, and example test fixtures for writing plugins as `mill-testkit`
+{link-pr}/3398[#3398] for downstream plugin authors to use in testing their own Mill extensions.
+
+*** See the documentation for
+https://mill-build.org/mill/Writing_Mill_Plugins.html[Writing Mill Plugins] for more details.
+
+*** `mill-testkit` is experimental and does not provide the same stability or binary-compatibility
+guarantees as the rest of Mill. Nevertheless, if you are writing Mill plugins, please try it out
+and let us know what you think!
+
+** Bump default Sonatype Maven Central publishing timeouts to 10 minutes to avoid
+timeouts due to slowness https://github.com/com-lihaoyi/mill/commit/b4c9386b0233fab53a312426715e226e4a7f6302
+
+** Importing Mill projects into IntelliJ via BSP now properly marks the `out/`, `.idea/`, and `.bsp/` folders
+as excluded {link-pr}/3329[#3329]
+
+** Optimizations to Mill evaluation logic to reduce fixed overhead of running Mill
+on large projects {link-pr}/3388[#3388]
+
+** Improvements to `visualize` and `visualizePlan` such that they no longer need to be
+prefixed with `show` and no longer need a separate `graphviz`/`dot` install on Mac-OSX
+{link-pr}/3438[#3438]
+
+
+[#0-11-12]
+=== 0.11.12 - 2024-08-20
+:version: 0.11.12
+:milestone-name: 0.11.12
+:milestone: 99
+:prev-version: 0.11.11
+
+_Changes since {prev-version}:_
+
+* Bump uTest to 0.8.4 {link-pr}/3340[#3340]
+* Manage TestModule dependencies via `build.sc` {link-pr}/3320[#3320]
+* Fix the warning not being printed when -i/--interactive/--no-server/--bsp are not the first argument {link-pr}/3346[#3346]
+* GenIdea: Make Scala SDK specific for JS / Native {link-pr}/3348[#3348]
+* CI: Adapt CI for 0.11.x branch {link-pr}/3350[#3350]
+* GenIdea: unroll module dependencies {link-pr}/3358[#3358]
+* Print pretty error message when Result.Failure is thrown {link-pr}/3393[#3393]
+* Avoid spurious deprecation warnings in generated code {link-pr}/3400[#3400]
+
+_For details refer to
+{link-milestone}/{milestone}?closed=1[milestone {milestone-name}]
+and the {link-compare}/{prev-version}\...{version}[list of commits]._
 
 [#0-11-11]
 === 0.11.11 - 2024-08-05
@@ -1187,7 +1332,7 @@ _Changes since {prev-version}:_
 * ``PathRef``s sigs are now more reproducible and independent of the used filesystem
 * `JavaModule` can now use a non-local Java Compiler to support all options
 * `Logger`: new `debugEnabled` to detect whether debug logging is enabled
-* New `testkit` module, to use `TestEvaluator` in external projects
+* New `testkit` module, to use `UnitTester` in external projects
 * Fixed reading of `.mill-jvm-opts` in server mode
 * BSP: Automatic SemanticDB enablement to improve Metals support
 * `mill.twirllib.TwirlModule` - new mandatory target `twirlScalaVersion` to configure the Scala version used by Twirl compiler, and support for newer versions
