@@ -28,9 +28,12 @@ jobs:
           # so make sure we do it all up from before starting
           command: "./mill -j1 __.resolvedIvyDeps && ./mill -ik << parameters.millargs >>"
           shell: bash.exe
-      - persist_to_workspace:
-          root: .
-          paths: '*'
+      - when:
+          condition: << parameters.do_checkout >>
+          steps:
+            - persist_to_workspace:
+                root: .
+                paths: '*'
 
   test:
     parameters:
