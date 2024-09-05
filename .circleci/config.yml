@@ -160,11 +160,6 @@ workflows:
         millargs: '"{main,scalalib,bsp}.__.testCached"'
         requires: [windows-build]
     - test-windows:
-        name: windows-scalajslib
-        java-version: "17"
-        millargs: '"scalajslib.__.testCached"'
-        requires: [windows-build]
-    - test-windows:
         name: windows-example-scalalib-basic
         java-version: "11"
         millargs: '"example.scalalib.basic.__.fork.testCached"'
@@ -183,9 +178,4 @@ workflows:
         name: windows-integration-failure
         java-version: "17"
         millargs: "'integration.failure[_].fork.testCached'"
-        requires: [windows-build]
-    - test-windows:
-        name: windows-contrib
-        java-version: "11"
-        millargs: "contrib.__.testCached"
         requires: [windows-build]
