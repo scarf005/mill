@@ -72,7 +72,7 @@ workflows:
     - test:
         name: contrib
         java-version: "17"
-        millargs: "contrib._.testCached"
+        millargs: "contrib.__.testCached"
 
       # Group these tests together to try and balance out the runtimes of each job
       # Just running in `local` mode since they shouldn't depend on the mode
