@@ -98,7 +98,7 @@ object ScriptsInvalidationTests extends IntegrationTestSuite {
         val result2 = runTask("taskE")
         val expected2 = Set("taskE2")
 
-        assert(result2 == expected)
+        assert(result2 == expected2)
       }
     }
     test("should handle ammonite paths with symbols") {
