@@ -55,10 +55,13 @@ class UnitTester(
     env: Map[String, String],
     resetSourcePath: Boolean
 )(implicit fullName: sourcecode.FullName) {
+
   val outPath: os.Path = module.millSourcePath / "out"
 
   if (resetSourcePath) {
-    os.remove.all(module.millSourcePath)
+    try os.remove.all(module.millSourcePath)
+    catch{case e: java.nio.file.DirectoryNotEmptyException => os.remove.all(module.millSourcePath)}
+
     os.makeDir.all(module.millSourcePath)
 
     for (sourceFileRoot <- Option(sourceRoot)) {

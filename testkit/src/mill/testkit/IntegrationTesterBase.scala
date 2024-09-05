@@ -20,7 +20,9 @@ trait IntegrationTesterBase {
    */
   def initWorkspace(): Unit = {
     println(s"Copying integration test sources from $workspaceSourcePath to $workspacePath")
-    os.remove.all(workspacePath)
+    try os.remove.all(workspacePath)
+    catch{case e: java.nio.file.DirectoryNotEmptyException => os.remove.all(workspacePath)}
+
     os.makeDir.all(workspacePath / os.up)
     // somehow os.copy does not properly preserve symlinks
     // os.copy(scriptSourcePath, workspacePath)

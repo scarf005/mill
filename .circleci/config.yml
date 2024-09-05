@@ -62,13 +62,9 @@ workflows:
       # on the opposite version on Windows below, so we get decent coverage of
       # each test on each Java version and each operating system
     - test:
-        name: scalajslib
+        name: scalajslib-scalanativelib
         java-version: "11"
-        millargs: '"scalajslib.__.testCached"'
-    - test:
-        name: scalanativelib
-        java-version: "11"
-        millargs: '"scalanativelib.__.testCached"'
+        millargs: '"{scalajslib,scalanativelib}.__.testCached"'
     - test:
         name: contrib
         java-version: "17"
