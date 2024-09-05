@@ -33,6 +33,8 @@ jobs:
     resource_class: large
 
     steps:
+    - attach_workspace:
+        at: .
     - checkout
     - run:
         name: "Install OpenJDK"
@@ -45,7 +47,9 @@ jobs:
     - run:
         name: "Mill Command"
         command: "./mill -ikj2 << parameters.millargs >>"
-
+    - persist_to_workspace:
+        root: .
+        paths: out
 workflows:
   all-tests:
     jobs:
