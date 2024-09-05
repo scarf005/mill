@@ -93,9 +93,13 @@ object PathRefTests extends TestSuite {
           assert(json.startsWith(""""qref:v0:"""))
           assert(json.endsWith(s""":${prFile}""""))
         } else {
-          val hash = if (Properties.isWin) "86df6a6a" else "4c7ef487"
-          val expected = s""""ref:v0:${hash}:${prFile}""""
-          assert(json == expected)
+          val hashes = Seq(
+            "86df6a6a", // windows
+            "4c7ef487", // mac
+            "72a3fbb3", // circleci
+          )
+          val expected = hashes.map(hash => s""""ref:v0:$hash:$prFile"""")
+          assert(expected.contains(json))
         }
         val pr1 = upickle.default.read[PathRef](json)
         assert(pr == pr1)
