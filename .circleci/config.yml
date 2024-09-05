@@ -12,13 +12,16 @@ jobs:
     machine:
       image: windows-server-2019-vs2019:2022.08.1
 
+
     steps:
       - checkout
       - attach_workspace:
           at: .
       - run:
           name: "Mill Command"
-          command: "./mill -ik << parameters.millargs >>"
+          # somehow ivy resolution causes nondeterministic concurrency failures on windows,
+          # so make sure we do it all up from before starting
+          command: "./mill -j1 __.resolvedIvyDeps && ./mill -ik << parameters.millargs >>"
           shell: bash.exe
       - persist_to_workspace:
           root: .
@@ -153,7 +156,7 @@ workflows:
     - test-windows:
         name: windows-build
         java-version: "11"
-        millargs: '-j1 __.resolvedIvyDeps; ./mill -ik "__.compile"'
+        millargs: '"__.compile"'
     - test-windows:
         name: windows-main-etc
         java-version: "11"
