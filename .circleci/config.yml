@@ -13,11 +13,16 @@ jobs:
       image: windows-server-2019-vs2019:2022.08.1
 
     steps:
+      - attach_workspace:
+          at: .
       - checkout
       - run:
           name: "Mill Command"
           command: "./mill -ikj1 __.compile; ./mill -ikj2 << parameters.millargs >>"
           shell: bash.exe
+      - persist_to_workspace:
+          root: .
+          paths: out
 
   test:
     parameters:
@@ -141,30 +146,41 @@ workflows:
       # just run a subset of examples/ on Windows, because for some reason running
       # the whole suite can take hours on windows v.s. half an hour on linux
     - test-windows:
+        name: windows-build
+        java-version: "11"
+        millargs: '"__.compile"'
+    - test-windows:
         name: windows-main-etc
         java-version: "11"
         millargs: '"{main,scalalib,bsp}.__.testCached"'
+        requires: [windows-build]
     - test-windows:
         name: windows-scalajslib
         java-version: "17"
         millargs: '"scalajslib.__.testCached"'
+        requires: [windows-build]
     - test-windows:
         name: windows-example-scalalib-basic
         java-version: "11"
         millargs: '"example.scalalib.basic.__.fork.testCached"'
+        requires: [windows-build]
     - test-windows:
         name: windows-integration-feature
         java-version: "17"
         millargs: "'integration.feature[_].fork.testCached'"
+        requires: [windows-build]
     - test-windows:
         name: windows-integration-invalidation
         java-version: "11"
         millargs: "'integration.invalidation[_].server.testCached'"
+        requires: [windows-build]
     - test-windows:
         name: windows-integration-failure
         java-version: "17"
         millargs: "'integration.failure[_].fork.testCached'"
+        requires: [windows-build]
     - test-windows:
         name: windows-contrib
         java-version: "11"
         millargs: "contrib.__.testCached"
+        requires: [windows-build]
