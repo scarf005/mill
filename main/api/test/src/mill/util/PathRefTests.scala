@@ -85,7 +85,7 @@ object PathRefTests extends TestSuite {
         val file = tmpDir / "foo.txt"
         // windows doesn't support setting posix permissions like this
         if (!mill.util.Util.windowsPlatform) os.write(file, "hello")
-        else os.write(file, "hello", perms = 420)
+        else os.write(file, "hello", perms = 436)
         val pr = PathRef(file, quick)
         val prFile = pr.path.toString().replace("\\", "\\\\")
         val json = upickle.default.write(pr)
