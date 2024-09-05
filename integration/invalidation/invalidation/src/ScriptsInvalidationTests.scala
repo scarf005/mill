@@ -95,10 +95,10 @@ object ScriptsInvalidationTests extends IntegrationTestSuite {
           _.replace("""println("taskE")""", """System.out.println("taskE2")""")
         )
 
-        val result = runTask("taskE")
-        val expected = Set("taskE2")
+        val result2 = runTask("taskE")
+        val expected2 = Set("taskE2")
 
-        assert(result == expected)
+        assert(result2 == expected)
       }
     }
     test("should handle ammonite paths with symbols") {
