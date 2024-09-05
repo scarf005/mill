@@ -38,9 +38,9 @@ jobs:
     resource_class: large
 
     steps:
+    - checkout
     - attach_workspace:
         at: .
-    - checkout
     - run:
         name: "Install OpenJDK"
         command: |
