@@ -160,6 +160,7 @@ workflows:
         name: docs
         java-version: "17"
         millargs: docs.githubPages
+        do_checkout: true
 
 
       # just run a subset of examples/ on Windows, because for some reason running
