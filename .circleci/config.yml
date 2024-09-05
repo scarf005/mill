@@ -7,14 +7,19 @@ jobs:
         type: string
       millargs:
         type: string
-
+      do_checkout:
+        type: boolean
+        default: false
     resource_class: windows.medium
     machine:
       image: windows-server-2019-vs2019:2022.08.1
 
 
     steps:
-      - checkout
+      - when:
+          condition: << parameters.do_checkout >>
+          steps:
+            - checkout
       - attach_workspace:
           at: .
       - run:
@@ -25,7 +30,7 @@ jobs:
           shell: bash.exe
       - persist_to_workspace:
           root: .
-          paths: out
+          paths: *
 
   test:
     parameters:
@@ -33,7 +38,9 @@ jobs:
         type: string
       millargs:
         type: string
-
+      do_checkout:
+        type: boolean
+        default: false
     machine:
       image: ubuntu-2004:current
 #    docker:
@@ -41,7 +48,10 @@ jobs:
     resource_class: large
 
     steps:
-    - checkout
+    - when:
+        condition: << parameters.do_checkout >>
+        steps:
+        - checkout
     - restore_cache:
         key: scala-library-dependencies-{{ checksum "build.mill" }}
     - attach_workspace:
@@ -62,7 +72,7 @@ jobs:
         key: scala-library-dependencies-{{ checksum "build.mill" }}
     - persist_to_workspace:
         root: .
-        paths: out
+        paths: *
 workflows:
   all-tests:
     jobs:
@@ -70,6 +80,7 @@ workflows:
         name: build
         java-version: "11"
         millargs: '"__.compile"'
+        do_checkout: true
     - test:
         name: main-etc-java11
         java-version: "11"
@@ -157,6 +168,7 @@ workflows:
         name: windows-build
         java-version: "11"
         millargs: '"__.compile"'
+        do_checkout: true
     - test-windows:
         name: windows-main-etc
         java-version: "11"
