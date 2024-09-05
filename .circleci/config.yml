@@ -153,7 +153,7 @@ workflows:
     - test-windows:
         name: windows-build
         java-version: "11"
-        millargs: '"__.compile"'
+        millargs: '-j1 __.resolvedIvyDeps; ./mill -ik "__.compile"'
     - test-windows:
         name: windows-main-etc
         java-version: "11"
