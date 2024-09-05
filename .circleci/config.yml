@@ -18,7 +18,7 @@ jobs:
           at: .
       - run:
           name: "Mill Command"
-          command: "./mill -ikj1 __.compile; ./mill -ikj2 << parameters.millargs >>"
+          command: "./mill -ik << parameters.millargs >>"
           shell: bash.exe
       - persist_to_workspace:
           root: .
@@ -39,6 +39,8 @@ jobs:
 
     steps:
     - checkout
+    - restore_cache:
+      key: scala-library-dependencies-{{ checksum "build.mill" }}
     - attach_workspace:
         at: .
     - run:
@@ -51,7 +53,10 @@ jobs:
           java -version
     - run:
         name: "Mill Command"
-        command: "./mill -ikj2 << parameters.millargs >>"
+        command: "./mill -ik << parameters.millargs >>"
+    - save_cache:
+        paths: [ "~/.m2", "~/.ivy2", "~/.cache/coursier" ]
+        key: scala-library-dependencies-{{ checksum "build.mill" }}
     - persist_to_workspace:
         root: .
         paths: out
