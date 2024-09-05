@@ -52,10 +52,10 @@ jobs:
         condition: << parameters.do_checkout >>
         steps:
         - checkout
-    - restore_cache:
-        key: scala-library-dependencies-{{ checksum "build.mill" }}
     - attach_workspace:
         at: .
+    - restore_cache:
+        key: scala-library-dependencies-{{ checksum "build.mill" }}
     - run:
         name: "Install OpenJDK"
         command: |
