@@ -13,7 +13,7 @@ jobs:
       image: windows-server-2019-vs2019:2022.08.1
 
     steps:
-      - run: git clone --depth 1 "git@github.com:com-lihaoyi/mill.git" --branch "$CIRCLE_BRANCH"
+      - checkout
       - run:
           name: "Mill Command"
           command: "./mill -ikj2 << parameters.millargs >>"
@@ -33,7 +33,7 @@ jobs:
     resource_class: large
 
     steps:
-    - run: git clone --depth 1 "git@github.com:com-lihaoyi/mill.git" --branch "$CIRCLE_BRANCH"
+    - checkout
     - run:
         name: "Install OpenJDK"
         command: |
@@ -45,6 +45,17 @@ jobs:
     - run:
         name: "Mill Command"
         command: "./mill -ikj2 << parameters.millargs >>"
+    - when:
+        condition:
+          equal: [ "build", << paramaters.name >> ]
+        steps:
+          - persist_to_workspace:
+              # Must be an absolute path, or relative path from working_directory. This is a directory in the execution
+              # environment which is taken to be the root directory of the workspace.
+              root: workspace
+              # Must be relative path from root
+              paths:
+                - echo-output
 
 workflows:
   all-tests:
