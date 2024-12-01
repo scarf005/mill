@@ -1,68 +1,90 @@
 package mill.main.client
 
-import org.junit.Assert.{assertEquals, assertTrue}
-import org.junit.{Rule, Test}
+import utest._
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 import java.nio.file.{Files, Paths}
 import scala.util.Random
 
-class ClientTests {
-
-  @Rule
-  val retryRule = new RetryRule(3)
-
-  @Test
-  def readWriteInt(): Unit = {
-    val examples = Array(
-      0,
-      1,
-      126,
-      127,
-      128,
-      254,
-      255,
-      256,
-      1024,
-      99999,
-      1234567,
-      Integer.MAX_VALUE,
-      Integer.MAX_VALUE / 2,
-      Integer.MIN_VALUE
-    )
-    for {
-      example0 <- examples
-      example <- Array(-example0, example0)
-    } {
-      val o = new ByteArrayOutputStream()
-      Util.writeInt(o, example)
-      val i = new ByteArrayInputStream(o.toByteArray)
-      val s = Util.readInt(i)
-      assertEquals(example, s)
-      assertEquals(i.available(), 0)
+object ClientTests extends TestSuite {
+  val tests = Tests {
+    test("readWriteInt") {
+      val examples = Array(
+        0,
+        1,
+        126,
+        127,
+        128,
+        254,
+        255,
+        256,
+        1024,
+        99999,
+        1234567,
+        Integer.MAX_VALUE,
+        Integer.MAX_VALUE / 2,
+        Integer.MIN_VALUE
+      )
+      for {
+        example0 <- examples
+        example <- Array(-example0, example0)
+      } {
+        val o = new ByteArrayOutputStream()
+        Util.writeInt(o, example)
+        val i = new ByteArrayInputStream(o.toByteArray)
+        val s = Util.readInt(i)
+        assert(example == s)
+        assert(i.available() == 0)
+      }
     }
-  }
 
-  @Test
-  def readWriteString(): Unit = {
-    val examples = Array(
-      "",
-      "hello",
-      "i am cow",
-      "i am cow\nhear me moo\ni weight twice as much as you",
-      "我是一个叉烧包"
-    )
-    for (example <- examples) {
-      checkStringRoundTrip(example)
+    test("readWriteString") {
+      val examples = Array(
+        "",
+        "hello",
+        "i am cow",
+        "i am cow\nhear me moo\ni weight twice as much as you",
+        "我是一个叉烧包"
+      )
+      for (example <- examples) {
+        checkStringRoundTrip(example)
+      }
     }
-  }
 
-  @Test
-  def readWriteBigString(): Unit = {
-    val lengths = Array(0, 1, 126, 127, 128, 254, 255, 256, 1024, 99999, 1234567)
-    for (length <- lengths) {
-      val bigChars = Array.fill(length)('X')
-      checkStringRoundTrip(new String(bigChars))
+    test("readWriteBigString") {
+      val lengths = Array(0, 1, 126, 127, 128, 254, 255, 256, 1024, 99999, 1234567)
+      for (length <- lengths) {
+        val bigChars = Array.fill(length)('X')
+        checkStringRoundTrip(new String(bigChars))
+      }
+    }
+
+    test("tinyProxyInputOutputStream") {
+      proxyInputOutputStreams(readSamples("/bandung.jpg").take(30), Array.empty, 10)
+    }
+
+    test("leftProxyInputOutputStream") {
+      proxyInputOutputStreams(
+        readSamples("/bandung.jpg", "/akanon.mid", "/gettysburg.txt", "/pip.tar.gz"),
+        Array.empty,
+        2950
+      )
+    }
+
+    test("rightProxyInputOutputStream") {
+      proxyInputOutputStreams(
+        Array.empty,
+        readSamples("/bandung.jpg", "/akanon.mid", "/gettysburg.txt", "/pip.tar.gz"),
+        3000
+      )
+    }
+
+    test("mixedProxyInputOutputStream") {
+      proxyInputOutputStreams(
+        readSamples("/bandung.jpg", "/gettysburg.txt"),
+        readSamples("/akanon.mid", "/pip.tar.gz"),
+        3050
+      )
     }
   }
 
@@ -71,8 +93,8 @@ class ClientTests {
     Util.writeString(o, example)
     val i = new ByteArrayInputStream(o.toByteArray)
     val s = Util.readString(i)
-    assertEquals(example, s)
-    assertEquals(i.available(), 0)
+    assert(example == s)
+    assert(i.available() == 0)
   }
 
   def readSamples(samples: String*): Array[Byte] = {
@@ -86,43 +108,6 @@ class ClientTests {
     out.toByteArray
   }
 
-  @Test
-  def tinyProxyInputOutputStream(): Unit = {
-    proxyInputOutputStreams(readSamples("/bandung.jpg").take(30), Array.empty, 10)
-  }
-
-  @Test
-  def leftProxyInputOutputStream(): Unit = {
-    proxyInputOutputStreams(
-      readSamples("/bandung.jpg", "/akanon.mid", "/gettysburg.txt", "/pip.tar.gz"),
-      Array.empty,
-      2950
-    )
-  }
-
-  @Test
-  def rightProxyInputOutputStream(): Unit = {
-    proxyInputOutputStreams(
-      Array.empty,
-      readSamples("/bandung.jpg", "/akanon.mid", "/gettysburg.txt", "/pip.tar.gz"),
-      3000
-    )
-  }
-
-  @Test
-  def mixedProxyInputOutputStream(): Unit = {
-    proxyInputOutputStreams(
-      readSamples("/bandung.jpg", "/gettysburg.txt"),
-      readSamples("/akanon.mid", "/pip.tar.gz"),
-      3050
-    )
-  }
-
-  /**
-   * Make sure that when we shove data through both ProxyOutputStreams in
-   * variously sized chunks, we get the exact same bytes back out from the
-   * ProxyStreamPumper.
-   */
   def proxyInputOutputStreams(samples1: Array[Byte], samples2: Array[Byte], chunkMax: Int): Unit = {
     val pipe = new ByteArrayOutputStream()
     val src1: OutputStream = new ProxyStream.Output(pipe, ProxyStream.OUT)
@@ -151,7 +136,7 @@ class ClientTests {
     val dest2 = new ByteArrayOutputStream()
     val pumper = new ProxyStream.Pumper(new ByteArrayInputStream(bytes), dest1, dest2)
     pumper.run()
-    assertTrue(java.util.Arrays.equals(samples1, dest1.toByteArray))
-    assertTrue(java.util.Arrays.equals(samples2, dest2.toByteArray))
+    assert(java.util.Arrays.equals(samples1, dest1.toByteArray))
+    assert(java.util.Arrays.equals(samples2, dest2.toByteArray))
   }
 }

@@ -139,8 +139,11 @@ object `package` extends RootModule with build.MillStableScalaModule with BuildI
     def buildInfoPackageName = "mill.main.client"
     def buildInfoMembers = Seq(BuildInfo.Value("millVersion", build.millVersion(), "Mill version."))
 
-    object test extends ScalaTests with TestModule.Junit4 {
-      def ivyDeps = Agg(build.Deps.junitInterface, build.Deps.commonsIo)
+    override def testModuleDeps = super.testModuleDeps ++ Seq(build.scalalib)
+    override def ivyDeps = Agg(build.Deps.commonsIo)
+    def testIvyDeps = Agg(ivy"com.lihaoyi::utest:0.8.1")
+    object test extends MillScalaTests {
+      def testFramework = "utest.runner.Framework"
     }
   }
 
